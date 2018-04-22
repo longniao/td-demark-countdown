@@ -8,4 +8,7 @@ setup(name='demarkcountdown',
       author_email='listep22@gmail.com',
       license='MIT',
       packages=['demarkcountdown'],
-      zip_safe=False)
+      zip_safe=False,
+      test_suite='nose.collector',
+      tests_require=['nose'],
+      )
