@@ -23,7 +23,7 @@ class DemarkCountdown():
         indices = []
 
         pattern_size = 6
-        for i in range(len(price_history) - pattern_size):
+        for i in range(len(price_history) - pattern_size + 2):
             if price_history[i]["close"] < price_history[i + 4]["close"] and \
                 price_history[i+1]["close"] > price_history[i + 5]["close"]:
                 indices.append(i)
@@ -42,9 +42,11 @@ class DemarkCountdown():
 
 
         pattern_size = 6
-        for i in range(len(price_history) - pattern_size):
+        for i in range(len(price_history) - pattern_size + 2):
+            print i
             if price_history[i]["close"] > price_history[i + 4]["close"] and \
                 price_history[i+1]["close"] < price_history[i + 5]["close"]:
+                print "here"
                 indices.append(i)
         self.cache["BULLISH_PRICE_FLIPS"] = {"indices": indices}
         return

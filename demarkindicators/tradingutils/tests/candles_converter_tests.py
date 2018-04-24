@@ -17,9 +17,11 @@ class CandlesConverterTests(unittest.TestCase):
         
         log.debug(candles)
         candles = candlesConverter.oanda(candles)
+        log.debug(candles)
         self.assertEqual(candles["candles"][0]["open"],1.09954)
+        self.assertEqual(candles["candles"][1]["open"],1.09951)
 
 if __name__ == "__main__":
-    logging.basicConfig( stream=sys.stderr )
+    logging.basicConfig( stream=sys.stdout )
     logging.getLogger( "CandlesConverterTests.oanda_test" ).setLevel( logging.DEBUG )
     unittest.main()

@@ -1,4 +1,5 @@
 import json
+from pprint import pprint
 class CandlesConverter():
     """
     Convert various candle formats to a standard format
@@ -30,13 +31,14 @@ class CandlesConverter():
         Convert object from Oanda style candles object into standard object
         """
         standard_candles = self._standard_candles_dict()
-        standard_candle = {}
-        for candle in candles["candles"]:
-            standard_candle["open"] = float(candle["mid"]["o"])
-            standard_candle["close"] = float(candle["mid"]["c"])
-            standard_candle["high"] = float(candle["mid"]["h"])
-            standard_candle["low"] = float(candle["mid"]["l"])
-            standard_candles["candles"].append(standard_candle)
+        standard_candles["candles"] = [None] * len(candles["candles"])
+        for index,candle in enumerate(candles["candles"]):
+            standard_candles["candles"][index] = {}
+            standard_candles["candles"][index]["open"] = float(candle["mid"]["o"])
+            standard_candles["candles"][index]["close"] = float(candle["mid"]["c"])
+            standard_candles["candles"][index]["high"] = float(candle["mid"]["h"])
+            standard_candles["candles"][index]["low"] = float(candle["mid"]["l"])
         # Reverse
+        pprint(standard_candles)
         standard_candles["candles"] = standard_candles["candles"][::-1]
         return standard_candles
