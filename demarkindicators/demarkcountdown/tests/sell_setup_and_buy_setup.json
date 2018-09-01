@@ -265,6 +265,7 @@
       }, 
       {
         "complete": true, 
+        "comment" : "buy setup bar 1",
         "mid": {
           "c": "71.561", 
           "h": "74.164", 
@@ -337,6 +338,7 @@
       }, 
       {
         "complete": true, 
+        "comment" : "Buy setup bar 9",
         "mid": {
           "c": "64.083", 
           "h": "64.176", 
@@ -345,7 +347,7 @@
         }
       }, 
       {
-        "comment" : "Buy setup bar 9",
+        
         "complete": true, 
         "mid": {
           "c": "63.774", 
