@@ -8,13 +8,15 @@ class CandlesConverter():
         {
             "candles" : [
                 {
-                    "open":"",
-                    "high":"",
-                    "low":"",
-                    "close:""
+                    "open":float,
+                    "high":float,
+                    "low":float,
+                    "close:float
                 }
             ]
         }
+
+    This format will have the most recent candle at index 0
     """
     def __init__(self):
         pass
