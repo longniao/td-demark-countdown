@@ -56,21 +56,12 @@
       },
       {
         "complete": true, 
+        "comment" : "Setup bar 1",
         "mid": {
           "c": "0.00008122", 
           "h": "0.00008125", 
           "l": "0.00008122", 
           "o": "0.00008125"
-        }
-      },
-      {
-        "complete": true, 
-        "comment" : "Setup bar 1",
-        "mid": {
-          "c": "0.0000813", 
-          "h": "0.00008132", 
-          "l": "0.00008108", 
-          "o": "0.00008108"
         }
       },
       {
@@ -138,7 +129,7 @@
       },
       {
         "complete": true, 
-        "comment" : "Setup bar 9, countdown bar 1",
+        "comment" : "Setup bar 9",
         "mid": {
           "c": "0.00008056", 
           "h": "0.00008063", 
@@ -211,15 +202,17 @@
       },
       {
         "complete": true, 
+        "comment" : "Countdown bar 2",
         "mid": {
-          "c": "0.0000809", 
+          "c": "0.00008089", 
           "h": "0.0000809", 
-          "l": "0.0000809", 
+          "l": "0.00008089", 
           "o": "0.0000809"
         }
       },
       {
         "complete": true, 
+        "comment" : "Countdown bar 3",
         "mid": {
           "c": "0.00008088", 
           "h": "0.00008093", 
@@ -247,6 +240,7 @@
       },
       {
         "complete": true, 
+        "comment" : "Countdown bar 4",
         "mid": {
           "c": "0.00008098", 
           "h": "0.00008102", 
@@ -337,7 +331,7 @@
       },
       {
         "complete": true, 
-        "comment" : "bar 5",
+        "comment" : "countdown bar 5",
         "mid": {
           "c": "0.00008103", 
           "h": "0.00008105", 
@@ -347,7 +341,7 @@
       },
       {
         "complete": true, 
-        "comment" : "bar 6",
+        "comment" : "countdown bar 6",
         "mid": {
           "c": "0.00008104", 
           "h": "0.00008104", 
@@ -357,7 +351,7 @@
       },
       {
         "complete": true, 
-        "comment" : "bar 7",
+        "comment" : "countdown bar 7",
         "mid": {
           "c": "0.00008096", 
           "h": "0.000081", 
@@ -367,7 +361,7 @@
       },
       {
         "complete": true, 
-        "comment" : "bar 8, aggressive",
+        "comment" : "countdown bar 8, aggressive",
         "mid": {
           "c": "0.00008092", 
           "h": "0.00008092", 

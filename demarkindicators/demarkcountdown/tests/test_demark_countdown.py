@@ -1,6 +1,6 @@
 import unittest
 from demarkcountdown import DemarkCountdown
-from tradingutils import CandlesConverter
+from tradingutils import CandlesConverter, CandleRanges
 import json
 import os
 import sys
@@ -10,25 +10,39 @@ from pprint import pprint
 curr_dir = os.path.dirname(os.path.realpath(__file__)) + "/"
 candlesConverter = CandlesConverter()
 
+# TODO: Tests for countdown cancellation qualifier I and for the true_range / true_index setups
+# TODO: Tests for closing range, price extreme
 class TrueRangeHighLowTest(unittest.TestCase):
     def test_true_low(self):
-        true_low = lambda index,price_history: min(price_history[index]["low"],price_history[index+1]["close"])
         candles = {}
         with open(curr_dir + "TrueRangeHighLowCandles/true_low.json","r") as f:
             candles = json.loads(f.read())
         candles = candlesConverter.oanda(candles)
-        self.assertEquals(true_low(0,candles["candles"]), 9.78)
-        self.assertEquals(true_low(2,candles["candles"]), 9.85)
+        self.assertEquals(CandleRanges.true_low(0,candles["candles"]), 9.78)
+        self.assertEquals(CandleRanges.true_low(2,candles["candles"]), 9.85)
     def test_true_high(self):
-        true_high = lambda index,price_history: max(price_history[index]["high"],price_history[index+1]["close"])
-
         candles = {}
         with open(curr_dir + "TrueRangeHighLowCandles/true_high.json","r") as f:
             candles = json.loads(f.read())
         candles = candlesConverter.oanda(candles)
-        self.assertEquals(true_high(0,candles["candles"]), 13.22)
-        self.assertEquals(true_high(2,candles["candles"]), 13.36)
-        
+        self.assertEquals(CandleRanges.true_high(0,candles["candles"]), 13.22)
+        self.assertEquals(CandleRanges.true_high(2,candles["candles"]), 13.36)
+    def test_true_range(self):
+        candles = {}
+        with open(curr_dir + "TrueRangeHighLowCandles/true_range_buy_setup.json","r") as f:
+            candles = json.loads(f.read())
+        candles = candlesConverter.oanda(candles)
+        demark = DemarkCountdown(candles)
+        demark.bullish_td_price_flip()
+        demark.bearish_td_price_flip()
+        demark.td_buy_setup()
+
+        first_buy_setup = demark.cache["TD_BUY_SETUPS"][0]["index"]
+        self.assertEquals(first_buy_setup,1)
+
+        # Float likely to be a little off
+        self.assertAlmostEquals(CandleRanges.true_range(first_buy_setup,first_buy_setup+8,candles["candles"]),.00000074)
+
 class PriceFlipUnitTest(unittest.TestCase):
     def test_bullish_price_flip_single_pattern(self):
         candles = {}
@@ -82,8 +96,8 @@ class TDSetupUnitTest(unittest.TestCase):
         demark = DemarkCountdown(candles)
         self.assertEquals(candles["candles"][0]["close"],63.774)
         demark.bullish_td_price_flip()
-        demark.td_sell_setup()
         demark.bearish_td_price_flip()
+        demark.td_sell_setup()
         demark.td_buy_setup()
         cache = demark.cache
         pprint(cache)
@@ -102,20 +116,33 @@ class TDSetupUnitTest(unittest.TestCase):
 class TDCountdownUnitTest(unittest.TestCase):
     def test_buy_setup_and_demark_countdown_pattern(self):
         candles = {}
-        with open(curr_dir + "bullish_demark_countdown.json","r") as f:
+        with open(curr_dir + "Countdowns/bullish_demark_countdown_two.json","r") as f:
             candles = json.loads(f.read())
 
         candles = candlesConverter.oanda(candles)
         demark = DemarkCountdown(candles)
-        self.assertEquals(candles["candles"][0]["close"],1.39452)
         demark.bullish_td_price_flip()
-        demark.td_sell_setup()
         demark.bearish_td_price_flip()
+        demark.td_sell_setup()
         demark.td_buy_setup()
-        demark.td_buy_countdown()
+        demark.td_buy_countdown(run_cancellation_qualifiers=False)
+        cache = demark.cache
+        #pprint(cache)
+        self.assertEquals(cache["TD_BUY_COUNTDOWNS"]['indices'][0],1)
+
+        with open(curr_dir + "Countdowns/bullish_demark_countdown_one.json","r") as f:
+            candles = json.loads(f.read())
+        candles = candlesConverter.oanda(candles)
+        demark = DemarkCountdown(candles)
+        demark.bullish_td_price_flip()
+        demark.bearish_td_price_flip()
+        demark.td_sell_setup()
+        demark.td_buy_setup()
+        demark.td_buy_countdown(run_cancellation_qualifiers=True)
         cache = demark.cache
         pprint(cache)
-        self.assertEquals(False,True)
+        self.assertEquals(cache["TD_BUY_COUNTDOWNS"]['indices'][0],1)
+        #self.assertEquals(False,True)
 
 if __name__ == "__main__":
     logging.basicConfig( stream=sys.stdout )

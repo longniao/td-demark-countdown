@@ -41,6 +41,5 @@ class CandlesConverter():
             standard_candles["candles"][index]["high"] = float(candle["mid"]["h"])
             standard_candles["candles"][index]["low"] = float(candle["mid"]["l"])
         # Reverse
-        pprint(standard_candles)
         standard_candles["candles"] = standard_candles["candles"][::-1]
         return standard_candles
