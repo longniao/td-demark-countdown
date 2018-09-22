@@ -15,7 +15,7 @@ class DemarkCountdown():
         cache["BULLISH_PRICE_FLIPS"] = {"indices": []}
         
 
-        # spec: 
+        # Setup spec: 
         # {
         #    "index" : int,
         #    "tdst_support/tdst_resistance" : (float,int),
@@ -34,8 +34,30 @@ class DemarkCountdown():
         
         cache["TD_SELL_SETUPS"] = [] 
         cache["TD_BUY_SETUPS"] = [] 
-        cache["TD_SELL_COUNTDOWNS"] = {}
-        cache["TD_BUY_COUNTDOWNS"] = {}
+
+        # Countdown spec:
+        #   {
+        #       "index" : int,
+        #       "recycled" : bool,
+        #       "setup_index" : int,
+        #       "stop_loss" : float,
+        #       "take_profit" : float,
+        #       "bar_one_index" : int
+        #   }
+        cache["TD_SELL_COUNTDOWNS"] = []
+        cache["TD_BUY_COUNTDOWNS"] = []
+
+        # 9-13-9 spec:
+        #   {
+        #       "index" : int,
+        #       "recycled" : bool,
+        #       "countdown_index" : int,
+        #       "stop_loss" : float,
+        #       "take_profit" : float
+        #   }
+        cache["TD_BUY_9_13_9"] = []
+        cache["TD_SELL_9_13_9"] = []
+
         # Level + bar number, this is the latest
         cache["TDST_SUPPORT"] = (None,None)
         cache["TDST_RESISTANCE"] = (None,None)
@@ -93,7 +115,7 @@ class DemarkCountdown():
         # Must be preceded by bullish price flip
         bullish_td_price_flip_indices = self.cache["BULLISH_PRICE_FLIPS"]["indices"]
         for price_flip_index in bullish_td_price_flip_indices:
-            if price_flip_index > 8:
+            if price_flip_index >= 8:
                 for j in range(9):
                     if not price_history[price_flip_index-j]["close"] > price_history[price_flip_index-j+4]["close"]:
                         break
@@ -159,7 +181,7 @@ class DemarkCountdown():
         # Must be preceded by bearish price flip
         bearish_td_price_flip_indices = self.cache["BEARISH_PRICE_FLIPS"]["indices"]
         for price_flip_index in bearish_td_price_flip_indices:
-            if price_flip_index > 8:
+            if price_flip_index >= 8:
                 for j in range(9):
                     if not price_history[price_flip_index-j]["close"] < price_history[price_flip_index-j+4]["close"]:
                         break
@@ -197,10 +219,11 @@ class DemarkCountdown():
             setup_index = pattern["index"]
             # Get true end of setup one
             true_end_setup = setup_index
-            for i in range(1,setup_index+1):
-                if price_history[setup_index-i]["close"] < price_history[setup_index-i+4]["close"] and \
-                    setup_index-i not in self.cache['BULLISH_PRICE_FLIPS']['indices']:
+            for i in range(setup_index-1,0,-1):
+                if price_history[i]["close"] < price_history[i+4]["close"]:
                     true_end_setup -= 1
+                else:
+                    break
             true_range = CandleRanges.true_range(true_end_setup, setup_index+8, price_history)
             closing_range = CandleRanges.closing_range(true_end_setup, setup_index+8, price_history)
             price_extreme = CandleRanges.price_extreme(true_end_setup, setup_index+8, price_history)
@@ -217,21 +240,19 @@ class DemarkCountdown():
             self.cache["TD_BUY_SETUPS"][x]["true_low"]       = CandleRanges.truest_low(true_end_setup, setup_index+8, price_history)
 
         # Evaluate cancellation qualifier I, set active flag
-        if len(self.cache["TD_BUY_SETUPS"]) >= 2:
-            true_range_one = self.cache["TD_BUY_SETUPS"][0]["true_range"]
-            true_range_two = self.cache["TD_BUY_SETUPS"][1]["true_range"]
-            if true_range_one >= true_range_two and true_range_one <= 1.618 * true_range_two:
-                print "[+] CQ I fulfilled"
-                if true_range_one > true_range_two:
-                    self.cache["TD_BUY_SETUPS"][0]["active"] = True
-                    self.cache["TD_BUY_SETUPS"][1]["active"] = False
-                if true_range_two > true_range_one:
-                    self.cache["TD_BUY_SETUPS"][0]["active"] = False
-                    self.cache["TD_BUY_SETUPS"][1]["active"] = True
-        
-        
-        
-
+        num_setups = len(self.cache["TD_BUY_SETUPS"])
+        if num_setups >= 2:
+            for i in range(num_setups-2,-1,-1):
+                true_range_one = self.cache["TD_BUY_SETUPS"][i]["true_range"]
+                true_range_two = self.cache["TD_BUY_SETUPS"][i+1]["true_range"]
+                if true_range_one >= true_range_two and true_range_one <= 1.618 * true_range_two:
+                    print "[+] CQ I fulfilled for BUY Setup with index ",self.cache["TD_BUY_SETUPS"][i]["index"]
+                    if true_range_one > true_range_two:
+                        self.cache["TD_BUY_SETUPS"][i]["active"] = True
+                        self.cache["TD_BUY_SETUPS"][i+1]["active"] = False
+                    if true_range_two > true_range_one:
+                        self.cache["TD_BUY_SETUPS"][i]["active"] = False
+                        self.cache["TD_BUY_SETUPS"][i+1]["active"] = True
         return
 
     def perfect_td_buy_setup(self,bar_nine_index):
@@ -262,27 +283,28 @@ class DemarkCountdown():
         return False
 
     def td_buy_countdown(self,run_cancellation_qualifiers=True):
+        """
+        td_buy_countdown:
+            @param run_cancellation_qualifiers: bool 
+        """
         price_history = self.price_history["candles"]
-        indices = []
+        countdowns = []
 
         # Run Cancellation Qualifier Check II & III
         if run_cancellation_qualifiers:
             self.td_buy_countdown_cancellation_qualifier_ii()
-            self.td_buy_countdown_cancellation_qualifier_iii()
+            self.td_buy_countdown_cancellation_qualifier_iiia()
 
         # Iterate through current buy setups and their index in the cache
         for pattern_index, pattern in enumerate(self.cache["TD_BUY_SETUPS"]):
-            # Do not evaluate pattern if it is not active (i.e. has not hit Cancellation Qualifier I)
+            # Do not evaluate pattern if it is not active (i.e. has hit Cancellation Qualifier I)
             if not pattern["active"]:
                 continue 
             
 
             setup_index = pattern["index"]
-            true_range = CandleRanges.true_range(setup_index,setup_index + 8,price_history)
-            print "True Range: ",true_range
             # Don't analyze the setup if there have not been at least 12 bars
             # or if there is a sell setup index less than 12 bars away
-            print "Setup: ",price_history[setup_index]
             if setup_index < 13: 
                 continue
             for pattern in range(len(self.cache["TD_SELL_SETUPS"])):
@@ -296,21 +318,25 @@ class DemarkCountdown():
             countdown_bars = [None] * 13
 
             # End at the most recent candle OR at the start of a later SELL setup at least 12 bars in the future
-            end_index = setup_index
+            end_index = setup_index + 1
             for pattern in self.cache["TD_SELL_SETUPS"]:
+                # TODO: Test
                 i = pattern["index"]
                 if i < setup_index:
                     end_index = i
-                    
+
+            bar_one_index = -1 # For calculating stop loss
             for x in range(0, end_index):
-                countdown_bar_index = setup_index - x
+                countdown_bar_index = setup_index - x 
                 if countdown_bar_index in [pattern["index"] for pattern in self.cache["TD_SELL_SETUPS"]]:
+                    # TODO: test
                     # Countdown cancelled if there is a setup in the opposite direction
                     # pg 21
                     print "cancel 1"
                     break
                 
                 if CandleRanges.true_low(countdown_bar_index,price_history) > self.cache["TD_BUY_SETUPS"][pattern_index]["tdst_resistance"][0]: #self.cache["TD_BUY_SETUPS"]["tdst_resistance"][pattern_index][0]:
+                    # TODO: test
                     # Cancelled if the market trades higher and posts a true low above
                     # the true high of the prior TD Buy Setup (TDST Resistance)
                     # pg 21
@@ -318,30 +344,52 @@ class DemarkCountdown():
                     break
 
                 if price_history[countdown_bar_index]["close"] <= price_history[countdown_bar_index + 2]["low"]:
-                    if count < 13:
+                    if count < 12:
+                        if count == 0:
+                            bar_one_index = countdown_bar_index
                         count +=1 
+                        
                         countdown_bars[count - 1] = price_history[countdown_bar_index]["close"]
-                    #print "Count ",count," Close: ",price_history[countdown_bar_index]["close"]
-                    
-                    # Last bar
-                    if count == 13 and price_history[countdown_bar_index]["low"] <= countdown_bars[7] and price_history[countdown_bar_index]["close"] <= price_history[countdown_bar_index + 2]["low"]:
+                    # Last bar, remember count starts at 0
+                    if count == 12 and price_history[countdown_bar_index]["low"] <= countdown_bars[7] and price_history[countdown_bar_index]["close"] <= price_history[countdown_bar_index + 2]["low"]:
                         countdown_bars[count - 1] = price_history[countdown_bar_index]["close"]
-                        indices.append(countdown_bar_index)
+
+                        # Find the lowest low for the stop loss
+                        lowest_low = price_history[countdown_bar_index]["low"]
+                        lowest_low_index = countdown_bar_index
+                        for x in range(countdown_bar_index, bar_one_index):
+                            if price_history[x]["low"] < lowest_low:
+                                lowest_low = CandleRanges.true_low(x,price_history)
+                                lowest_low_index = x
+                        
+                        #TODO: test
+                        stop_loss = lowest_low - (CandleRanges.true_high(lowest_low_index,price_history) - CandleRanges.true_low(lowest_low_index,price_history))
+                        countdowns.append({ \
+                            "index" : countdown_bar_index, \
+                            "recycled" : False, \
+                            "setup_index" : setup_index, \
+                            "stop_loss" : stop_loss, \
+                            "bar_one_index" : bar_one_index
+                            })
+
+                        break
             
 
-        self.cache["TD_BUY_COUNTDOWNS"]["indices"] = indices
+        self.cache["TD_BUY_COUNTDOWNS"] = countdowns
 
     def td_buy_countdown_cancellation_qualifier_ii(self):
-        price_history = self.price_history["candles"]
-        # Address cancellation qualifier II
-        # If
-        #   - The market has completed a TD Buy Setup that has a closing range within the true
-        #       range of the prior TD Buy Setup, without recording a TD Sell Setup between the two
-        # And
-        #   - The current TD buy setup has a price extreme within the true range of the prior TD Buy Setup
-        # Then
-        #   - The prior TD Buy Setup  is the active TD Setup and the TD Buy Countdown relating to it remains intact
-        # * Keeping in mind that the buy setup can extend beyond bar nine if there is no price flip to extinguish
+        #TODO: test
+        """
+        Address cancellation qualifier II
+         If
+           - The market has completed a TD Buy Setup that has a closing range within the true
+               range of the prior TD Buy Setup, without recording a TD Sell Setup between the two
+         And
+           - The current TD buy setup has a price extreme within the true range of the prior TD Buy Setup
+         Then
+           - The prior TD Buy Setup  is the active TD Setup and the TD Buy Countdown relating to it remains intact
+         * Keeping in mind that the buy setup can extend beyond bar nine if there is no price flip to extinguish
+        """
         sandwich = False
         for pattern_number, pattern in enumerate(self.cache["TD_BUY_SETUPS"]):
             # Do not evaluate the last pattern
@@ -359,16 +407,82 @@ class DemarkCountdown():
                 continue
 
             if (pattern["max_close"] <  prev_buy_setup["true_high"] and \
-                pattern["min_close"] > prev_buy_setup["true_low"]):
-                print "[+] Hit Cancellation Qualifier II"
+                pattern["min_close"] > prev_buy_setup["true_low"]) and \
+                (pattern["max_high"] < prev_buy_setup["true_high"] and \
+                pattern["min_low"] > prev_buy_setup["true_low"]):
+                print "[+] Hit Cancellation Qualifier II for pattern with index ",pattern["index"]
                 pattern["active"] = False
 
-    def td_buy_countdown_cancellation_qualifier_iii(self):
-        # Address cancellation qualifier III
-        # If
-        #   Setup is 18 bars or longer, do not do countdown
+    def td_buy_countdown_cancellation_qualifier_iiia(self):
+        """
+         Address cancellation qualifier III
+         If
+           Setup BEFORE countdown is 18 bars or longer, do not do countdown
+        """
         for pattern in self.cache["TD_BUY_SETUPS"]:
             if (pattern["index"] - pattern["true_end_index"]) + 9 >= 18:
-                print "[+] Hit Cancellation Qualifier III for pattern with index ",pattern["index"]
+                print "[+] Hit Cancellation Qualifier IIIa for pattern with index ",pattern["index"]
                 pattern["active"] = False
 
+    def td_buy_countdown_cancellation_qualifier_iiib(self,countdown):
+        #TODO: test
+        """
+        td_buy_countdown_cancellation_qualifier_iiib:
+            @param coundown: Countdown object from the cache
+
+        Address cancellation qualifier III
+         If
+           Setup AFTER or DURING countdown is 18 bars or longer, recycle
+        """
+
+        setup_index = countdown["setup_index"]
+
+        # Find the next bullish price flip 
+        closest_bullish_price_flip = filter(lambda x: x < setup_index, self.cache["BULLISH_PRICE_FLIPS"]["indices"])[-1]
+        for pattern in self.cache["TD_BUY_SETUPS"]:
+            if pattern["index"] > closest_bullish_price_flip and ((pattern["index"] - pattern["true_end_index"]) + 9 >= 18):
+                    print "[+] Hit Cancellation Qualifier IIIb for pattern with index ",pattern["index"]
+                    pattern["active"] = False
+    
+    def td_buy_9_13_9(self):
+        #TODO: Test
+        """
+        td_buy_9_13_9:
+        Conditions:
+            1. The TD Buy Setup must not begin before or on the same price bar as the complete TD Buy Countdown
+            2. The ensuing bullish TD Buy Setup mus tbe preceded by a TD Price Flip 
+            3. No complete TD Sell Setup should occur prior to the appearance of the TD Buy Setup
+
+        """
+        price_history = self.price_history
+        for countdown in self.cache["TD_BUY_COUNTDOWNS"]:
+            for setup in self.cache["TD_BUY_SETUPS"]:
+                # Only test first buy setup past countdown.
+                if setup["index"] < countdown["index"]:
+                    if len(filter(lambda x: x > setup["index"] + 8 and x < countdown["index"], self.cache["BULLISH_PRICE_FLIPS"])) == 1:
+                    
+                        sell_setups = [pattern["index"] for pattern in self.cache["TD_SELL_SETUPS"]]
+                        if len(filter(lambda x: x > setup["index"] and x < countdown["index"], sell_setups)) == 0:
+                            
+                             
+                            lowest_low = price_history[setup["index"]]["low"]
+                            lowest_low_index = setup["index"]
+                            for x in range(setup["index"],countdown["bar_one_index"]):
+                                if price_history[x]["low"] < lowest_low:
+                                    lowest_low = CandleRanges.true_low(x,price_history)
+                                    lowest_low_index = x
+                            
+                            stop_loss = lowest_low - (CandleRanges.true_high(lowest_low_index,price_history) - CandleRanges.true_low(lowest_low_index,price_history))
+                        
+                            buy_9_13_9 = {
+                                "index": setup["index"],
+                                "countdown_index" : countdown["index"],
+                                "stop_loss" : stop_loss
+                            }
+
+                            self.cache["TD_BUY_9_13_9"].append(buy_9_13_9)
+                        else:
+                            return
+                    return
+                    
+        

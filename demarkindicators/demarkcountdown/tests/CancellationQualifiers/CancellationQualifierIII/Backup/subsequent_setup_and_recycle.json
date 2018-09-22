@@ -1,0 +1,102 @@
+{
+    "candles": [   
+        {
+            "complete": true, 
+            "comment" : "setup bar 1, countdown bar 2",
+            "mid": {
+            "o": "1.21585", 
+            "h": "1.21697", 
+            "l": "1.20973", 
+            "c": "1.20992"
+            }
+        },{
+            "complete": true,
+            "comment" : "countdown bar 3", 
+            "mid": {
+            "o": "1.20992", 
+            "h": "1.20992", 
+            "l": "1.19981", 
+            "c": "1.19995"
+            }
+        },{
+            "complete": true, 
+            "comment" : "countdown bar 4",
+            "mid": {
+            "o": "1.19552", 
+            "h": "1.19762", 
+            "l": "1.18627", 
+            "c": "1.19325"
+            }
+        },{
+            "complete": true, 
+            "comment" : "countdown bar 5",
+            "mid": {
+            "o": "1.19325", 
+            "h": "1.19687", 
+            "l": "1.18841", 
+            "c": "1.18891"
+            }
+        },{
+            "complete": true, 
+            "comment" : "countdown bar 6",
+            "mid": {
+            "o": "1.18891", 
+            "h": "1.18965", 
+            "l": "1.18020", 
+            "c": "1.18394"
+            }
+        },{
+            "complete": true, 
+            "comment" :"countdown bar 7",
+            "mid": {
+            "o": "1.18394", 
+            "h": "1.18474", 
+            "l": "1.17541", 
+            "c": "1.17894"
+            }
+        },{
+            "complete": true, 
+            "mid": {
+            "o": "1.17894", 
+            "h": "1.18461", 
+            "l": "1.17624", 
+            "c": "1.18411"
+            }
+        },{
+            "complete": true, 
+            "mid": {
+            "o": "1.18482", 
+            "h": "1.18709", 
+            "l": "1.1786", 
+            "c": "1.18332"
+            }
+        },{
+            "complete": true, 
+            "comment" : "buy setup bar 9, countdown recycled here",
+            "mid": {
+            "o": "1.18332", 
+            "h": "1.18595", 
+            "l": "1.17529", 
+            "c": "1.17723"
+            }
+        },{
+            "complete": true, 
+            "mid": {
+            "o": "1.17723", 
+            "h": "1.18464", 
+            "l": "1.17273", 
+            "c": "1.17875"
+            }
+        },{
+            "complete": true, 
+            "mid": {
+            "o": "1.17875", 
+            "h": "1.17929", 
+            "l": "1.15667", 
+            "c": "1.16295"
+            }
+        }
+    ], 
+"granularity": "D1", 
+"instrument": "EURUSD"
+}
