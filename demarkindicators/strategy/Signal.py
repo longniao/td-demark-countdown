@@ -1,4 +1,4 @@
 
-class Strategy():
+class Signal():
     def __init__(self):
         pass

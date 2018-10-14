@@ -293,14 +293,15 @@ class DemarkCountdown():
         # Run Cancellation Qualifier Check II & III
         if run_cancellation_qualifiers:
             self.td_buy_countdown_cancellation_qualifier_ii()
-            self.td_buy_countdown_cancellation_qualifier_iiia()
+            #self.td_buy_countdown_cancellation_qualifier_iiia()
 
         # Iterate through current buy setups and their index in the cache
         for pattern_index, pattern in enumerate(self.cache["TD_BUY_SETUPS"]):
             # Do not evaluate pattern if it is not active (i.e. has hit Cancellation Qualifier I)
             if not pattern["active"]:
                 continue 
-            
+            if run_cancellation_qualifiers and self.td_buy_countdown_cancellation_qualifier_iiia(pattern=pattern):
+                continue
 
             setup_index = pattern["index"]
             # Don't analyze the setup if there have not been at least 12 bars
@@ -413,16 +414,23 @@ class DemarkCountdown():
                 print "[+] Hit Cancellation Qualifier II for pattern with index ",pattern["index"]
                 pattern["active"] = False
 
-    def td_buy_countdown_cancellation_qualifier_iiia(self):
+    def td_buy_countdown_cancellation_qualifier_iiia(self,calculate_all=False,pattern=None):
         """
          Address cancellation qualifier III
          If
            Setup BEFORE countdown is 18 bars or longer, do not do countdown
         """
-        for pattern in self.cache["TD_BUY_SETUPS"]:
+        if not calculate_all:
             if (pattern["index"] - pattern["true_end_index"]) + 9 >= 18:
                 print "[+] Hit Cancellation Qualifier IIIa for pattern with index ",pattern["index"]
-                pattern["active"] = False
+                return True
+            else:
+                return False
+        if calculate_all:
+            for pattern in self.cache["TD_BUY_SETUPS"]:
+                if (pattern["index"] - pattern["true_end_index"]) + 9 >= 18:
+                    print "[+] Hit Cancellation Qualifier IIIa for pattern with index ",pattern["index"]
+                    pattern["active"] = False
 
     def td_buy_countdown_cancellation_qualifier_iiib(self,countdown):
         #TODO: test
