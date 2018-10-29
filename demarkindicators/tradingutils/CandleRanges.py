@@ -63,12 +63,14 @@ class CandleRanges(object):
     def truest_high(cls,low_index,high_index,price_history):
         highest_high = cls.max_high(low_index,high_index,price_history)
         index = [price_history[i]["high"] for i in range(low_index,high_index+1)].index(highest_high)
-        return cls.true_high(index,price_history)
+        return cls.true_high(index,price_history[low_index:high_index+2])
     
     @classmethod
     def truest_low(cls,low_index,high_index,price_history):
         lowest_low = cls.min_low(low_index,high_index,price_history)
         index = [price_history[i]["low"] for i in range(low_index,high_index+1)].index(lowest_low)
-        return cls.true_low(index,price_history)
+        return cls.true_low(index,price_history[low_index:high_index+2])
+
+    
     
     
